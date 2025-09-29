@@ -11,6 +11,9 @@ GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE
 TO  scott;
 
 
+grant create view to scott; // 스콧계정에 view를 만들 권한 추가
+
+
 select * from tab;
 
 select * from all_users

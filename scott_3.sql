@@ -148,6 +148,233 @@ update emp e
  -- 오라클 서버-- 웹서버(노드) -- 클라이언트(fetch)
  select *
  from emp;
+  
+desc emp;
+  
+insert into emp(empno, ename, job, hiredate, deptno)
+values (9999, 'Hong', 'SALESMAN', to_date('1982-03-01','rrrr-mm-dd'), 30);
+
+update emp
+set ename = 'Hong',
+    job = 'SALESMAN',
+    hiredate = to_date('1982-03-01','rrrr-mm-dd'),
+    deptno = 30
+where empno = 9999;
  
+-- sal => 1000 변경.
+update emp
+set sal = 1000
+where sal < 1000;
+
+-- sale직무 -> comm 500미만인 사원 comm을 -> 500주기
+
+UPDATE emp
+SET comm = 500
+WHERE NVL(comm, 0) < 500;;
+
+-- 1981년 전반기에 입사한 사람들(1~6월) => 급여 10% 인상
+
+UPDATE emp
+set sal = sal * 1.10
+where hiredate >= '1981/01/01' and hiredate < '1981/07/01';
+
+--
+select * from professor;
+
+select * from student;
+
+select * from department;
+-- Rene 'Russo 학생의 담당교수 번호,이름,position, 확인.
+
+SELECT p.profno, p.name, position
+FROM student s
+JOIN professor p
+ON s.profno = p.profno
+where s.name='Rene Russo';
+
+-- 전공: 'Computer Engineering' => 학생들의 학번, 이름을 확인
+-- 전공1, 전공2도 같이 
+-- 학생 전공1 중에 'Computer Engineering' 학생들의 담당교수번호,이름,직책을 확인
+
+SELECT DISTINCT p.profno, p.name, position
+FROM student s
+JOIN department d
+  ON s.deptno1 = d.deptno -- 학과가 101 인데
+-- OR s.deptno2 = d.deptno
+JOIN professor p
+  ON d.deptno = p.deptno  
+WHERE d.deptno = 101;
+
+--어시스트 교사 출력
+SELECT DISTINCT p.profno, p.name, position
+FROM student s
+JOIN professor p
+ON s.profno = p.profno
+WHERE position = 'assistant professor';
+
+--학생전공 'Computer Engineering' 중 몸무게의 평균, 그보다 더 큰 학생들
+select *
+from student ss
+where ss.weight > (SELECT avg(weight)
+                   FROM student s
+                   join department d
+                   on s.deptno1 = d.deptno
+                   where d.dname = 'Computer Engineering');
+
+-- 전공이 : Electronic Engineering 학생들의 담당교수.
+select *
+from professor pp
+where pp.position in (SELECT p.position
+                    FROM professor p
+                    JOIN student s
+                    on p.profno = s.profno
+                    join department d
+                    on s.deptno1 = d.deptno
+                    where d.dname = 'Electronic Engineering');
+                    
+-- 담당교수 급여(pay)의 평균이상을 교수번호, 이름 확인.
+
+select name
+from professor pp
+where pp.pay >= (select avg(pay)
+                from professor );
+                
+-- 보너스가 없는사람들 중에 입사 일자가 가장 빠른사람 이전에 입사한 사람들 출력
+
+select name
+from professor pp
+where pp.hiredate < (SELECT hiredate
+                    FROM professor
+                    WHERE bonus IS NULL
+                    AND hiredate = (
+                    SELECT MIN(hiredate)
+                    FROM professor
+                    WHERE bonus IS NULL
+  ));
+
+
+-- 보너스 안받는 사람들 중에 월급 > 보너스가 있는 사람들 중에 월급 => 월급 10% 인상
+update professor
+set pay = pay  * 1.1
+where bonus is not null and  bonus < (SELECT pay 
+                    FROM professor
+                    WHERE bonus IS NULL
+                    AND pay =(SELECT MAX(pay)
+                    FROM professor
+                    WHERE bonus IS NULL));
+-- view
+create or replace view emp_dept_v
+as
+select empno, ename, job, sal, e.deptno, dname, comm
+from emp e
+join dept d
+on e.deptno = d.deptno;
+
+select *
+from emp_dept_v;
+
+create or replace view emp_v
+as
+select empno,ename, job, deptno
+from emp;
+
+update emp_v
+set ename = '',
+    deptno = ''
+where empno = '9999';
+
+select * from tab;
+
+select position, count(*) --v.*, d.dname
+from stud_prof_v v
+join department d
+on v.deptno = d.deptno
+--where position = 'a full professor'
+group by position;
+
+-- 학생, 담당교수 뷰
+create or replace view stud_prof_v as
+select studno
+    , s.name
+    , s.birthday
+    , s.tel
+    , s.deptno1 deptno
+    , p.profno
+    , p.name profname
+    , p.position
+    , p.email
+from student s
+left outer join professor p
+on s.profno = p.profno;
+
+select profno, name, position, email
+from professor;
+
+
+
+SELECT e.*, d.dname FROM emp e
+        join dept d
+        on e.deptno = d.deptno
+        where ename = DECODE ('ALL', 'ALL', ename, 'ALL')
+        and   job = DECODE ('ANALYST', 'ALL', job, 'ANALYST')
+        and   e.deptno = DECODE (-1, -1, e.deptno, -1);
+
+
+create table board_t(
+    board_no number(5) constraint PK_board_t primary key,
+    title varchar2(100) not null,
+    content varchar2(1000) not null,
+    writer varchar2(50) not null,
+    write_date date default sysdate,
+    likes number(3));
+
+-- 1. 게시판글연습, 게시판이잘되는지 연습, 홍길동
+-- 2. 두더지게시판, 두더지는 무섭습니다, 김길동
+-- 3. sql재밌네, sql중에 join은 어렵지만 재밌네요., 박석민
+-- 4. 삭제는 어떻게 해요, delete from 테이블 where 조건절, 홍길동
+insert into board_t (board_no, title, content, writer) 
+values(1, '게시판글연습', '게시판이잘되는지 연습', '홍길동');
+insert into board_t (board_no, title, content, writer) 
+values(2, '두더지게시판', '두더지는 무섭습니다', '김길동');
+insert into board_t (board_no, title, content, writer) 
+values(3, 'sql재밌네', 'sql 중 join은 어렵지만 재밌네요', '박석민');
+insert into board_t (board_no, title, content, writer) 
+values(4, '삭제는 어떻게 해요', 'delete from 테이블 where 조건절', '홍길동');
+
+insert into board_t (board_no, title, content, writer)
+values ((select max(board_no)+1 from board_t), '게시판글연습', '게시판이 잘되는지 연습합니다', '홍길동');
+
+--시퀀스 사용.
+delete from board_t;
+
+create sequence board_t_seq
+increment by 1          --1씩증가
+start with 1            -- 1부터시작
+maxvalue 120            --120이 끝
+minvalue 80             -- 80부터 시작
+cycle                   --121부터 0으로감
+;
+
+drop sequence board_t_seq; //시퀀스 삭제
+
+select board_t_seq.nextval from dual;
+
+select max(board_no)+1 from board_t;
+
+select count(*) from board_t;
+
+insert into board_t (board_no, title, content, writer) 
+select board_t_seq.nextval, title, content, writer
+from board_t;
+
+alter table board_t
+modify board_no number(10);
+
+create sequence board_t_seq
+increment by 1        
+maxvalue 99999999999;   
+
+select * from board_t;
+
 rollback;
 commit;
