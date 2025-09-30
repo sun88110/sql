@@ -355,26 +355,38 @@ minvalue 80             -- 80부터 시작
 cycle                   --121부터 0으로감
 ;
 
-drop sequence board_t_seq; //시퀀스 삭제
+drop sequence board_t_seq; -- 시퀀스 삭제
+create sequence board_t_seq; -- 시퀀스 생성 
+maxvalue 9999999999 ;
+ 
+select board_t_seq.nextval from dual; --하나씩증가
 
-select board_t_seq.nextval from dual;
+select max(board_no)+1 from board_t;  --현재 최대값에 +1해서 확인
 
-select max(board_no)+1 from board_t;
-
-select count(*) from board_t;
+select count(*) from board_t; -- 현재 행 확인
 
 insert into board_t (board_no, title, content, writer) 
 select board_t_seq.nextval, title, content, writer
 from board_t;
 
 alter table board_t
-modify board_no number(10);
+modify board_no number(10); --보더 넘버 크기 증가하게 갱신
+  
 
-create sequence board_t_seq
-increment by 1        
-maxvalue 99999999999;   
+-- 1page : 1 ~ 10, 2 page : 11 ~ 20,
+select b.*
+from (select /*+ INDEX_DESC(PK_BOARD_T) */ rownum rn, a.*
+      from board_t a ) b
+where b.rn > (:page - 1) * 10
+and   b.rn <= (:page * 10);
 
-select * from board_t;
+create index board write _date_idx
+on board_t(writer_date);
+
+delete from board_t where board_no = 6;
+
+select /*+ INDEX_DESC(PK_BOARD_T) */ b.*
+from board_t b;
 
 rollback;
 commit;

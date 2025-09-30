@@ -1,14 +1,14 @@
-select username from all_users;
+select username from all_users order by username;
 
 ALTER SESSION SET "_ORACLE_SCRIPT"=true;
 
-create user scott
-identified by tiger
+create user hr
+identified by hr
 DEFAULT TABLESPACE users
 TEMPORARY TABLESPACE temp;
 
-GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE
-TO  scott;
+GRANT CONNECT, RESOURCE, create view, UNLIMITED TABLESPACE
+TO  hr;
 
 
 grant create view to scott; // 스콧계정에 view를 만들 권한 추가
